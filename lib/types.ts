@@ -1,90 +1,92 @@
 /**
- * Core type definitions for the Bullshit media literacy game.
+ * Core type definitions for the Yiddish or Bullshit word game.
  * All game domain types live here — components import, never define.
  */
 
-/** Confidence level — snaps to 10-point increments from 50–100 */
-export type ConfidenceLevel = 50 | 60 | 70 | 80 | 90 | 100;
+/** Confidence level — 5 discrete tiers */
+export type ConfidenceLevel = 1 | 2 | 3 | 4 | 5;
 
-/** Player's vote on a headline */
-export type Vote = "real" | "bullshit";
+/** Player's vote on a word */
+export type Vote = "yiddish" | "bullshit";
 
 /** Game mode */
 export type GameMode = "daily" | "freeplay";
 
-/** Content category */
-export type Category = "politics" | "science-health" | "tech-ai";
+/** Part of speech for real Yiddish words */
+export type PartOfSpeech =
+  | "noun"
+  | "verb"
+  | "adjective"
+  | "adverb"
+  | "exclamation"
+  | "idiom";
 
-/** Calibration assessment result */
-export type Calibration =
-  | "overconfident"
-  | "well-calibrated"
-  | "underconfident"
-  | "perfect"
-  | "n/a";
-
-/** Manipulation technique taxonomy — PRD canonical slugs */
-export type Technique =
-  | "anonymous-sourcing"
-  | "emotional-amplification"
-  | "headline-body-mismatch"
-  | "false-precision"
-  | "recycled-news"
-  | "out-of-context"
-  | "false-authority"
-  | "ai-generated-text"
-  | "ai-generated-image"
-  | "satire-presented-as-real"
-  | "missing-dateline"
-  | "correlation-as-causation";
-
-/** Confidence level labels */
-export const CONFIDENCE_LABELS: Record<ConfidenceLevel, string> = {
-  50: "Guess",
-  60: "Lean",
-  70: "Confident",
-  80: "Sure",
-  90: "Certain",
-  100: "Definite",
+/** Confidence tier definitions with scoring and display text */
+export const CONFIDENCE_TIERS: Record<
+  ConfidenceLevel,
+  { label: string; correct: number; wrong: number; subtitle: string }
+> = {
+  1: { label: "Guess", correct: 50, wrong: -10, subtitle: "Right: +50. Wrong: \u221210." },
+  2: { label: "Hunch", correct: 100, wrong: -50, subtitle: "Right: +100. Wrong: \u221250." },
+  3: { label: "Pretty Sure", correct: 150, wrong: -100, subtitle: "Right: +150. Wrong: \u2212100." },
+  4: { label: "Damn Sure", correct: 250, wrong: -250, subtitle: "Right: +250. Wrong: \u2212250." },
+  5: { label: "No Doubt", correct: 350, wrong: -400, subtitle: "Right: +350. Wrong: \u2212400." },
 } as const;
 
-/** A single content item (headline) the player evaluates */
-export interface ContentItem {
-  /** Unique identifier (three-digit zero-padded string) */
+/** Shared fields for all word items */
+interface BaseWordItem {
+  /** Unique identifier (four-digit zero-padded string) */
   readonly id: string;
-  /** Content type — "headline" only in Epoch 1 */
-  readonly type: "headline";
-  /** The headline text shown to the player (max 180 chars) */
-  readonly headline: string;
-  /** Whether this headline is real or fabricated */
-  readonly isReal: boolean;
-  /** Source attribution — outlet name for real, impersonated outlet or null for fakes */
-  readonly source: string | null;
-  /** URL to the original article */
-  readonly sourceUrl?: string;
-  /** ISO date string when originally published */
-  readonly publishedDate?: string;
-  /** Content category */
-  readonly category: Category;
+  /** Content type — "word" only in Epoch 1 */
+  readonly type: "word";
+  /** The word as displayed to the player (romanized Latin script) */
+  readonly word: string;
+  /** Phonetic pronunciation guide (stressed syllable in caps) */
+  readonly pronunciation: string;
   /** Difficulty rating 0.0–1.0 */
   readonly difficulty: number;
-  /** The precise observation identifying this item as real or fake */
-  readonly tell: string;
-  /** Technique slug from the approved taxonomy */
-  readonly technique: Technique;
-  /** Human-readable technique name */
-  readonly techniqueName?: string;
-  /** One-paragraph explanation of the broader technique */
-  readonly techniqueExplanation?: string;
+  /** ISO date string when added to content pool */
+  readonly addedDate?: string;
 }
+
+/** A real Yiddish word */
+export interface RealWordItem extends BaseWordItem {
+  readonly isReal: true;
+  /** English definition (max 200 chars) */
+  readonly definition: string;
+  /** Part of speech */
+  readonly partOfSpeech: PartOfSpeech;
+  /** The word in Yiddish script (Hebrew characters) */
+  readonly yiddishScript?: string;
+  /** Example sentence using the word in English context */
+  readonly exampleUsage?: string;
+  /** Brief etymology note */
+  readonly etymology?: string;
+  /** Whether this word is commonly used in English */
+  readonly commonInEnglish: boolean;
+}
+
+/** A fabricated (fake) word */
+export interface FakeWordItem extends BaseWordItem {
+  readonly isReal: false;
+  /** The fabricated definition shown on reveal */
+  readonly fakeDefinition: string;
+  /** What makes this word fake — the specific giveaway */
+  readonly tell: string;
+  /** Which real Yiddish patterns were mimicked (editorial, not shown) */
+  readonly basedOn?: string;
+}
+
+/** A word item — either real or fake (discriminated on isReal) */
+export type WordItem = RealWordItem | FakeWordItem;
 
 /** Result of a single round of play */
 export interface RoundResult {
-  /** The content item for this round */
-  readonly item: ContentItem;
+  /** The word item for this round */
+  readonly item: WordItem;
   /** Player's vote */
   readonly vote: Vote;
-  /** Player's confidence level */
+  /** Player's confidence level (1–5) */
   readonly confidence: ConfidenceLevel;
   /** Whether the player was correct */
   readonly correct: boolean;
@@ -97,11 +99,7 @@ export interface RoundResult {
 }
 
 /** Possible states of the game state machine */
-export type GamePhase =
-  | "idle"
-  | "voted"
-  | "confirmed"
-  | "complete";
+export type GamePhase = "idle" | "voted" | "confirmed" | "complete";
 
 /** Full session state used by the game hook */
 export interface GameSession {
@@ -110,7 +108,7 @@ export interface GameSession {
   /** Game mode */
   readonly mode: GameMode;
   /** Items selected for this session (5 total) */
-  readonly items: readonly ContentItem[];
+  readonly items: readonly WordItem[];
   /** Current round index (0-based) */
   readonly currentRound: number;
   /** Completed round results */
@@ -135,10 +133,8 @@ export interface SessionResult {
   readonly totalScore: number;
   /** Accuracy as fraction (0–1) */
   readonly accuracy: number;
-  /** Average confidence across all rounds */
+  /** Average confidence across all rounds (1–5 scale) */
   readonly averageConfidence: number;
-  /** Calibration assessment */
-  readonly calibration: Calibration;
   /** Total bonus points from streak multipliers */
   readonly streakBonus: number;
   /** Best streak */

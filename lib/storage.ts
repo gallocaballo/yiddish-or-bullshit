@@ -1,5 +1,5 @@
 /**
- * LocalStorage helpers for the Bullshit game.
+ * LocalStorage helpers for Yiddish or Bullshit.
  * Handles daily records and lifetime player stats.
  * All functions are safe to call during SSR (no-op / defaults).
  */
@@ -7,8 +7,8 @@
 import type { DailyRecord, PlayerStats, SessionResult } from "./types";
 
 const STORAGE_KEYS = {
-  DAILY_RECORD: "bullshit:daily",
-  PLAYER_STATS: "bullshit:stats",
+  DAILY_RECORD: "yob:daily",
+  PLAYER_STATS: "yob:stats",
 } as const;
 
 /** Default stats for a new player */

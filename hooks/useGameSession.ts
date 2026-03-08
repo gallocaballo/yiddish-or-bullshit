@@ -13,7 +13,7 @@
 import { useCallback, useState } from "react";
 import type {
   ConfidenceLevel,
-  ContentItem,
+  WordItem,
   GameMode,
   GameSession,
   RoundResult,
@@ -32,7 +32,7 @@ import {
 /** Actions the game hook exposes */
 export interface GameActions {
   /** Start a new game session with selected items */
-  startSession: (items: ContentItem[], mode: GameMode) => void;
+  startSession: (items: WordItem[], mode: GameMode) => void;
   /** Submit a vote (transitions idle → voted, or updates vote during voted phase) */
   submitVote: (vote: Vote) => void;
   /** Update confidence level (only during voted phase) */
@@ -50,7 +50,7 @@ export interface UseGameSessionReturn {
   session: GameSession;
   actions: GameActions;
   /** The current item being evaluated, or null if complete */
-  currentItem: ContentItem | null;
+  currentItem: WordItem | null;
   /** The latest round result (available during confirmed phase) */
   lastResult: RoundResult | null;
   /** Final session result (available when phase is 'complete') */
@@ -59,7 +59,7 @@ export interface UseGameSessionReturn {
 
 /** Initial session state */
 function createInitialSession(
-  items: readonly ContentItem[] = [],
+  items: readonly WordItem[] = [],
   mode: GameMode = "daily"
 ): GameSession {
   return {
@@ -85,7 +85,7 @@ export function useGameSession(): UseGameSessionReturn {
   const [session, setSession] = useState<GameSession>(createInitialSession());
 
   const startSession = useCallback(
-    (items: ContentItem[], mode: GameMode) => {
+    (items: WordItem[], mode: GameMode) => {
       setSession(createInitialSession(items, mode));
     },
     []
@@ -172,7 +172,7 @@ export function useGameSession(): UseGameSessionReturn {
   }, []);
 
   // Derived values
-  const currentItem: ContentItem | null =
+  const currentItem: WordItem | null =
     session.phase !== "complete" ? (session.items[session.currentRound] ?? null) : null;
 
   const lastResult: RoundResult | null =

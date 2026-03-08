@@ -8,7 +8,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useCallback, Suspense } from "react";
 import { useGameSession } from "@/hooks/useGameSession";
-import { ContentCard } from "@/components/ContentCard";
+import { WordCard } from "@/components/WordCard";
 import { VoteButtons } from "@/components/VoteButtons";
 import { ConfidenceSlider } from "@/components/ConfidenceSlider";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -17,10 +17,10 @@ import { SessionHeader } from "@/components/SessionHeader";
 import { selectDailyItems, selectFreePlayItems, getTodayDateStr } from "@/lib/challenge";
 import { saveDailyRecord, updatePlayerStats } from "@/lib/storage";
 import { ROUNDS_PER_SESSION } from "@/lib/game";
-import type { ContentItem, GameMode } from "@/lib/types";
-import itemsData from "@/data/items.json";
+import type { WordItem, GameMode, Vote, ConfidenceLevel } from "@/lib/types";
+import wordsData from "@/data/words.json";
 
-const allItems = itemsData as ContentItem[];
+const allItems = wordsData as WordItem[];
 
 function PlayGame() {
   const searchParams = useSearchParams();
@@ -51,7 +51,7 @@ function PlayGame() {
       }
       // Store result in sessionStorage for results page
       sessionStorage.setItem(
-        "bullshit:lastResult",
+        "yob:lastResult",
         JSON.stringify(sessionResult)
       );
       // Navigate after a brief moment
@@ -63,14 +63,14 @@ function PlayGame() {
   }, [sessionResult, mode, router]);
 
   const handleVote = useCallback(
-    (vote: "real" | "bullshit") => {
+    (vote: Vote) => {
       actions.submitVote(vote);
     },
     [actions]
   );
 
   const handleConfidenceChange = useCallback(
-    (level: 50 | 60 | 70 | 80 | 90 | 100) => {
+    (level: ConfidenceLevel) => {
       actions.setConfidence(level);
     },
     [actions]
@@ -80,11 +80,10 @@ function PlayGame() {
     actions.confirmVote();
   }, [actions]);
 
-  /** Tap anywhere during reveal to advance. Ignores clicks on links. */
+  /** Tap anywhere during reveal to advance. */
   const handleTapToContinue = useCallback(
     (e: React.MouseEvent) => {
       if (session.phase !== "confirmed") return;
-      // Don't advance if the player clicked a link (e.g. "Read Source")
       if ((e.target as HTMLElement).closest("a")) return;
       actions.advance();
     },
@@ -116,10 +115,11 @@ function PlayGame() {
           streak={session.streak}
         />
 
-        {/* Headline card */}
+        {/* Word card */}
         {currentItem && (
-          <ContentCard
-            headline={currentItem.headline}
+          <WordCard
+            word={currentItem.word}
+            pronunciation={currentItem.pronunciation}
             roundNumber={session.currentRound + 1}
             revealed={isRevealed}
           />

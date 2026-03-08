@@ -8,7 +8,16 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import type { SessionResult } from "@/lib/types";
+import { CONFIDENCE_TIERS } from "@/lib/types";
+import type { ConfidenceLevel } from "@/lib/types";
 import { formatPoints } from "@/lib/game";
+
+/** Get the nearest tier label for an average confidence value */
+function getTierLabel(avg: number): string {
+  const rounded = Math.round(avg) as ConfidenceLevel;
+  const clamped = Math.max(1, Math.min(5, rounded)) as ConfidenceLevel;
+  return CONFIDENCE_TIERS[clamped].label;
+}
 
 function ResultsContent() {
   const [result, setResult] = useState<SessionResult | null>(null);
@@ -16,7 +25,7 @@ function ResultsContent() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("bullshit:lastResult");
+    const raw = sessionStorage.getItem("yob:lastResult");
     if (raw) {
       setResult(JSON.parse(raw) as SessionResult);
     }
@@ -31,7 +40,7 @@ function ResultsContent() {
         width: 1200,
         height: 630,
         scale: 1,
-        backgroundColor: "#0D0D0D",
+        backgroundColor: "#1A1A1A",
       });
 
       canvas.toBlob(async (blob) => {
@@ -48,7 +57,7 @@ function ResultsContent() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `bullshit-${result?.date ?? "score"}.png`;
+          a.download = `yob-${result?.date ?? "score"}.png`;
           a.click();
           URL.revokeObjectURL(url);
         }
@@ -61,7 +70,7 @@ function ResultsContent() {
   const handleCopyText = useCallback(async () => {
     if (!result) return;
     const correctCount = result.results.filter((r) => r.correct).length;
-    const text = `I scored ${result.totalScore} on today's Bullshit challenge. ${correctCount}/5 correct. Can you do better? playbullshit.com`;
+    const text = `I scored ${result.totalScore} on today's Yiddish or Bullshit. ${correctCount}/5 correct. Nu, can you do better?`;
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -115,7 +124,7 @@ function ResultsContent() {
             </div>
             <div>
               <p className="font-bold text-text-primary">
-                {result.averageConfidence}%
+                {getTierLabel(result.averageConfidence)}
               </p>
               <p className="text-text-secondary">Avg Confidence</p>
             </div>
@@ -146,12 +155,12 @@ function ResultsContent() {
             >
               <div className="flex-1 truncate pr-3">
                 <p className="truncate text-sm font-medium text-text-primary">
-                  {r.item.headline}
+                  {r.item.word}
                 </p>
                 <p className="text-xs text-text-secondary">
                   Voted{" "}
                   <span className="capitalize font-medium">{r.vote}</span> at{" "}
-                  {r.confidence}%
+                  {CONFIDENCE_TIERS[r.confidence].label}
                   {r.streakMultiplier > 1 && (
                     <span className="ml-1 text-[#A07820]">
                       ({r.streakMultiplier}x)
@@ -179,7 +188,7 @@ function ResultsContent() {
           ))}
         </div>
 
-        {/* Share card (off-screen for capture) — PRD spec */}
+        {/* Share card (off-screen for capture) */}
         <div className="overflow-hidden" style={{ height: 0 }}>
           <div
             ref={shareCardRef}
@@ -190,7 +199,7 @@ function ResultsContent() {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "#0D0D0D",
+              backgroundColor: "#1A1A1A",
               color: "#ffffff",
               fontFamily: "Georgia, 'Times New Roman', serif",
             }}
@@ -212,7 +221,7 @@ function ResultsContent() {
                   letterSpacing: "0.02em",
                 }}
               >
-                BULLSHIT
+                YIDDISH OR BULLSHIT
               </span>
               <span style={{ fontSize: 24, color: "#999999" }}>
                 {result.date}
@@ -252,7 +261,7 @@ function ResultsContent() {
               </span>
             </div>
 
-            {/* Round indicators with confidence */}
+            {/* Round indicators with confidence tier */}
             <div
               style={{
                 marginTop: 40,
@@ -285,17 +294,12 @@ function ResultsContent() {
                   >
                     {r.correct ? "\u2713" : "\u2717"}
                   </span>
-                  <span style={{ fontSize: 16, color: "#999999" }}>
-                    {r.confidence}%
+                  <span style={{ fontSize: 14, color: "#999999" }}>
+                    {CONFIDENCE_TIERS[r.confidence].label}
                   </span>
                 </div>
               ))}
             </div>
-
-            {/* Domain URL */}
-            <p style={{ marginTop: 32, fontSize: 18, color: "#999999" }}>
-              playbullshit.com
-            </p>
           </div>
         </div>
 

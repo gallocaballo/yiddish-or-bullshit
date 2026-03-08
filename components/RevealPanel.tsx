@@ -1,21 +1,13 @@
 /**
  * RevealPanel — shown after the player confirms their vote.
- * Displays correct/wrong result, source, publication date, tell,
- * technique explanation, and source link.
+ * Displays correct/wrong result, and word details:
+ * - Real words: definition, part of speech, example, etymology
+ * - Fake words: fake definition (dimmed), tell
  */
 
 import type { RoundResult } from "@/lib/types";
+import { CONFIDENCE_TIERS } from "@/lib/types";
 import { formatPoints } from "@/lib/game";
-
-/** Format an ISO date string as a readable date, avoiding Safari timezone issues */
-function formatDate(iso: string): string {
-  const date = new Date(iso + "T00:00:00");
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 interface RevealPanelProps {
   /** The round result to display */
@@ -24,6 +16,7 @@ interface RevealPanelProps {
 
 export function RevealPanel({ result }: RevealPanelProps) {
   const { item, correct, vote, confidence, points, streakMultiplier } = result;
+  const tierLabel = CONFIDENCE_TIERS[confidence].label;
 
   return (
     <div className="animate-reveal w-full space-y-4">
@@ -37,9 +30,9 @@ export function RevealPanel({ result }: RevealPanelProps) {
       >
         {correct ? "Correct!" : "Wrong!"}{" "}
         <span className="font-normal">
-          — The headline is{" "}
+          — The word is{" "}
           <span className="font-semibold">
-            {item.isReal ? "REAL" : "BULLSHIT"}
+            {item.isReal ? "REAL YIDDISH" : "NOT A REAL WORD"}
           </span>
         </span>
       </div>
@@ -48,7 +41,7 @@ export function RevealPanel({ result }: RevealPanelProps) {
       <div className="text-center text-sm text-text-secondary">
         You voted{" "}
         <span className="font-semibold capitalize">{vote}</span> at{" "}
-        <span className="font-semibold">{confidence}%</span> confidence →{" "}
+        <span className="font-semibold">{tierLabel}</span> confidence →{" "}
         <span
           className={`font-bold ${
             points >= 0 ? "text-correct-teal" : "text-wrong-amber"
@@ -65,58 +58,62 @@ export function RevealPanel({ result }: RevealPanelProps) {
 
       {/* Details card */}
       <div className="rounded-lg border border-border bg-card-bg p-4 space-y-3">
-        {/* Source + publication date */}
-        {item.source && (
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-              Source
-            </p>
-            <p className="text-sm text-text-primary">{item.source}</p>
-            {item.isReal && item.publishedDate && (
-              <p className="text-xs text-text-secondary">
-                {formatDate(item.publishedDate)}
+        {item.isReal ? (
+          <>
+            {/* Real word details */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
+                Definition
               </p>
-            )}
-          </div>
-        )}
-
-        {/* Tell */}
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-            The Tell
-          </p>
-          <p className="font-serif text-sm text-text-primary">{item.tell}</p>
-        </div>
-
-        {/* Technique */}
-        {item.techniqueName && (
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-              Technique
-            </p>
-            <p className="text-sm font-medium text-text-primary">
-              {item.techniqueName}
-            </p>
-            {item.techniqueExplanation && (
-              <p className="mt-1 text-xs text-text-secondary">
-                {item.techniqueExplanation}
+              <p className="text-sm text-text-primary">
+                <span className="italic text-text-secondary">
+                  ({item.partOfSpeech})
+                </span>{" "}
+                {item.definition}
               </p>
-            )}
-          </div>
-        )}
+            </div>
 
-        {/* Read Source link — real items only */}
-        {item.isReal && item.sourceUrl && (
-          <a
-            href={item.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block underline"
-            style={{ fontSize: 14, color: "#555555" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            Read Source &rarr;
-          </a>
+            {item.exampleUsage && (
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
+                  Example
+                </p>
+                <p className="font-serif text-sm italic text-text-primary">
+                  {item.exampleUsage}
+                </p>
+              </div>
+            )}
+
+            {item.etymology && (
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
+                  Etymology
+                </p>
+                <p className="text-xs text-text-secondary">{item.etymology}</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Fake word details */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
+                Fake Definition
+              </p>
+              <p className="text-sm text-text-secondary italic">
+                {item.fakeDefinition}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
+                The Tell
+              </p>
+              <p className="font-serif text-sm text-text-primary">
+                {item.tell}
+              </p>
+            </div>
+          </>
         )}
       </div>
     </div>

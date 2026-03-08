@@ -1,11 +1,11 @@
 /**
- * Challenge seeding and item selection for the Bullshit game.
+ * Challenge seeding and item selection for Yiddish or Bullshit.
  *
  * Daily challenges use a date-based seed for deterministic selection.
  * Free play uses a random seed each time.
  */
 
-import type { ContentItem } from "./types";
+import type { WordItem } from "./types";
 import { ROUNDS_PER_SESSION } from "./game";
 
 /**
@@ -61,14 +61,14 @@ export function seededShuffle<T>(items: readonly T[], rng: () => number): T[] {
  * Uses date-based seed for deterministic, reproducible selection.
  * Ensures a balanced mix of real and fake items.
  *
- * @param allItems - Full pool of content items
+ * @param allItems - Full pool of word items
  * @param dateStr - Date string (YYYY-MM-DD) for seeding
  * @returns Array of ROUNDS_PER_SESSION items
  */
 export function selectDailyItems(
-  allItems: readonly ContentItem[],
+  allItems: readonly WordItem[],
   dateStr: string
-): ContentItem[] {
+): WordItem[] {
   const seed = dateToSeed(dateStr);
   const rng = createRng(seed);
 
@@ -82,7 +82,7 @@ export function selectDailyItems(
   const realCount = Math.floor(ROUNDS_PER_SESSION / 2) + (rng() > 0.5 ? 1 : 0);
   const fakeCount = ROUNDS_PER_SESSION - realCount;
 
-  const selected: ContentItem[] = [
+  const selected: WordItem[] = [
     ...shuffledReal.slice(0, realCount),
     ...shuffledFake.slice(0, fakeCount),
   ];
@@ -95,12 +95,12 @@ export function selectDailyItems(
  * Select items for free play mode.
  * Uses a random seed for non-deterministic selection.
  *
- * @param allItems - Full pool of content items
+ * @param allItems - Full pool of word items
  * @returns Array of ROUNDS_PER_SESSION items
  */
 export function selectFreePlayItems(
-  allItems: readonly ContentItem[]
-): ContentItem[] {
+  allItems: readonly WordItem[]
+): WordItem[] {
   const seed = Date.now() ^ Math.floor(Math.random() * 0xffffffff);
   const rng = createRng(seed);
 
@@ -113,7 +113,7 @@ export function selectFreePlayItems(
   const realCount = Math.floor(ROUNDS_PER_SESSION / 2) + (rng() > 0.5 ? 1 : 0);
   const fakeCount = ROUNDS_PER_SESSION - realCount;
 
-  const selected: ContentItem[] = [
+  const selected: WordItem[] = [
     ...shuffledReal.slice(0, realCount),
     ...shuffledFake.slice(0, fakeCount),
   ];

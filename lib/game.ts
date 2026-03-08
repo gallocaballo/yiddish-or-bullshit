@@ -1,5 +1,5 @@
 /**
- * Scoring and game logic for the Bullshit game.
+ * Scoring and game logic for Yiddish or Bullshit.
  * Pure functions only — no side effects, no state mutation.
  *
  * Scoring follows the PRD asymmetric point table:
@@ -9,38 +9,26 @@
  */
 
 import type {
-  Calibration,
   ConfidenceLevel,
   Vote,
-  ContentItem,
+  WordItem,
   RoundResult,
   SessionResult,
   GameMode,
 } from "./types";
+
+import { CONFIDENCE_TIERS } from "./types";
 
 /** Total rounds per game session */
 export const ROUNDS_PER_SESSION = 5;
 
 /** All valid confidence levels */
 export const CONFIDENCE_LEVELS: readonly ConfidenceLevel[] = [
-  50, 60, 70, 80, 90, 100,
+  1, 2, 3, 4, 5,
 ] as const;
 
 /** Default confidence level for new rounds */
-export const DEFAULT_CONFIDENCE: ConfidenceLevel = 60;
-
-/**
- * PRD point table — asymmetric scoring.
- * Higher confidence = higher reward when correct, steeper penalty when wrong.
- */
-const POINT_TABLE: Record<number, { correct: number; wrong: number }> = {
-  50: { correct: 50, wrong: -10 },
-  60: { correct: 85, wrong: -40 },
-  70: { correct: 120, wrong: -80 },
-  80: { correct: 170, wrong: -140 },
-  90: { correct: 240, wrong: -220 },
-  100: { correct: 350, wrong: -400 },
-};
+export const DEFAULT_CONFIDENCE: ConfidenceLevel = 2;
 
 /**
  * Get the streak multiplier for a given streak length.
@@ -56,10 +44,10 @@ export function getStreakMultiplier(streak: number): number {
 }
 
 /**
- * Calculate points for a single round using the PRD point table.
+ * Calculate points for a single round using the confidence tier table.
  *
  * @param correct - Whether the player's vote matched reality
- * @param confidence - The player's confidence level
+ * @param confidence - The player's confidence level (1–5)
  * @param streakMultiplier - Streak multiplier (only applied to correct answers)
  * @returns Points earned (can be negative)
  */
@@ -68,37 +56,37 @@ export function calculatePoints(
   confidence: ConfidenceLevel,
   streakMultiplier: number = 1.0
 ): number {
-  const entry = POINT_TABLE[confidence];
+  const tier = CONFIDENCE_TIERS[confidence];
   if (correct) {
-    return Math.round(entry.correct * streakMultiplier);
+    return Math.round(tier.correct * streakMultiplier);
   }
   // Wrong answers are NOT amplified by streak multiplier
-  return entry.wrong;
+  return tier.wrong;
 }
 
 /**
- * Determine if a vote is correct for a given content item.
+ * Determine if a vote is correct for a given word item.
  *
  * @param vote - The player's vote
- * @param item - The content item being evaluated
+ * @param item - The word item being evaluated
  * @returns Whether the vote matches the item's real/fake status
  */
-export function isVoteCorrect(vote: Vote, item: ContentItem): boolean {
-  return (vote === "real") === item.isReal;
+export function isVoteCorrect(vote: Vote, item: WordItem): boolean {
+  return (vote === "yiddish") === item.isReal;
 }
 
 /**
  * Build a RoundResult from a player's vote on an item.
  *
- * @param item - The content item
+ * @param item - The word item
  * @param vote - The player's vote
- * @param confidence - The player's confidence level
+ * @param confidence - The player's confidence level (1–5)
  * @param roundNumber - 1-based round number
  * @param streak - Current streak BEFORE this round (for multiplier)
  * @returns Complete round result
  */
 export function buildRoundResult(
-  item: ContentItem,
+  item: WordItem,
   vote: Vote,
   confidence: ConfidenceLevel,
   roundNumber: number,
@@ -120,33 +108,6 @@ export function buildRoundResult(
 }
 
 /**
- * Calculate calibration assessment from round results.
- * Compares average confidence on wrong answers vs right answers.
- *
- * @param rounds - Completed round results
- * @returns Calibration classification
- */
-export function calculateCalibration(
-  rounds: readonly RoundResult[]
-): Calibration {
-  const wrong = rounds.filter((r) => !r.correct);
-  const right = rounds.filter((r) => r.correct);
-
-  if (wrong.length === 0) return "perfect";
-  if (right.length === 0) return "n/a";
-
-  const avgWrong =
-    wrong.reduce((s, r) => s + r.confidence, 0) / wrong.length;
-  const avgRight =
-    right.reduce((s, r) => s + r.confidence, 0) / right.length;
-  const delta = avgWrong - avgRight;
-
-  if (delta > 15) return "overconfident";
-  if (delta < -15) return "underconfident";
-  return "well-calibrated";
-}
-
-/**
  * Build a SessionResult from completed round results.
  *
  * @param results - All round results from the session
@@ -161,15 +122,13 @@ export function buildSessionResult(
   const totalCorrect = results.filter((r) => r.correct).length;
   const averageConfidence =
     results.length > 0
-      ? Math.round(
-          results.reduce((sum, r) => sum + r.confidence, 0) / results.length
-        )
+      ? results.reduce((sum, r) => sum + r.confidence, 0) / results.length
       : 0;
 
   // Streak bonus = sum of (points with multiplier - points without multiplier)
   const streakBonus = results.reduce((sum, r) => {
     if (r.correct && r.streakMultiplier > 1) {
-      const base = POINT_TABLE[r.confidence].correct;
+      const base = CONFIDENCE_TIERS[r.confidence].correct;
       return sum + (r.points - base);
     }
     return sum;
@@ -191,7 +150,6 @@ export function buildSessionResult(
     totalScore,
     accuracy: results.length > 0 ? totalCorrect / results.length : 0,
     averageConfidence,
-    calibration: calculateCalibration(results),
     streakBonus,
     bestStreak,
     mode,

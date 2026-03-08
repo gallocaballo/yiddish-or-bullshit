@@ -9,18 +9,18 @@ export default function HomePage() {
       <main className="w-full max-w-md space-y-8 text-center">
         {/* Title */}
         <div className="space-y-2">
-          <h1 className="font-serif text-5xl font-normal tracking-tight text-text-primary sm:text-6xl">
-            Bullshit
+          <h1 className="font-serif text-4xl font-normal tracking-tight text-text-primary sm:text-5xl">
+            Yiddish or Bullshit
           </h1>
           <p className="text-lg text-text-secondary">
-            Can you spot the fake headlines?
+            Can you tell real Yiddish from made-up words?
           </p>
         </div>
 
         {/* Description */}
         <p className="text-sm leading-relaxed text-text-secondary">
-          You&apos;ll see 5 headlines. For each one, decide if it&apos;s{" "}
-          <span className="font-semibold text-real-green">Real</span> or{" "}
+          You&apos;ll see 5 words. For each one, decide if it&apos;s{" "}
+          <span className="font-semibold text-yiddish-blue">Yiddish</span> or{" "}
           <span className="font-semibold text-bs-red">Bullshit</span>, then set
           your confidence. Higher confidence on correct answers means more
           points.
@@ -44,7 +44,7 @@ export default function HomePage() {
 
         {/* Footer note */}
         <p className="text-xs text-text-secondary">
-          Everyone gets the same daily headlines. Come back tomorrow for a new
+          Everyone gets the same daily words. Come back tomorrow for a new
           set.
         </p>
       </main>
