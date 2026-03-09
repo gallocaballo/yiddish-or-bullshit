@@ -28,9 +28,9 @@ export const CONFIDENCE_TIERS: Record<
 > = {
   1: { label: "Guess", correct: 50, wrong: -10, subtitle: "Right: +50. Wrong: \u221210." },
   2: { label: "Hunch", correct: 100, wrong: -50, subtitle: "Right: +100. Wrong: \u221250." },
-  3: { label: "Pretty Sure", correct: 150, wrong: -100, subtitle: "Right: +150. Wrong: \u2212100." },
-  4: { label: "Damn Sure", correct: 250, wrong: -250, subtitle: "Right: +250. Wrong: \u2212250." },
-  5: { label: "100% Positive", correct: 350, wrong: -400, subtitle: "Right: +350. Wrong: \u2212400." },
+  3: { label: "Sure", correct: 150, wrong: -100, subtitle: "Right: +150. Wrong: \u2212100." },
+  4: { label: "Certain", correct: 250, wrong: -250, subtitle: "Right: +250. Wrong: \u2212250." },
+  5: { label: "Positive", correct: 350, wrong: -400, subtitle: "Right: +350. Wrong: \u2212400." },
 } as const;
 
 /** Shared fields for all word items */

@@ -30,7 +30,7 @@ export function ConfidenceSlider({
       <span className="text-sm font-medium text-text-secondary">
         Confidence
       </span>
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="flex flex-wrap gap-1.5 justify-center">
         {CONFIDENCE_LEVELS.map((level) => {
           const tier = CONFIDENCE_TIERS[level];
           const isSelected = level === value;
@@ -41,7 +41,7 @@ export function ConfidenceSlider({
               type="button"
               onClick={() => onChange(level)}
               disabled={disabled}
-              className={`rounded-full px-3 py-2 text-sm font-medium transition-all duration-150 ${
+              className={`rounded-full px-2.5 py-1.5 text-xs font-medium transition-all duration-150 ${
                 isSelected
                   ? "bg-text-primary text-bg-primary"
                   : "border border-border bg-card-bg text-text-primary hover:border-text-secondary"
