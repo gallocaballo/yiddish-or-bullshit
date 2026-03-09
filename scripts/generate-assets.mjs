@@ -22,27 +22,17 @@ async function generateOGImage() {
   // Build an SVG with all the text elements
   const svg = `
   <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${width}" height="${height}" fill="#0D0D0D"/>
+    <rect width="${width}" height="${height}" fill="#1A1A1A"/>
 
-    <!-- BULLSHIT title -->
-    <text x="600" y="220" text-anchor="middle"
-          font-family="Georgia, 'Times New Roman', serif" font-size="72"
-          fill="#A07820" letter-spacing="3">BULLSHIT</text>
+    <!-- Game name -->
+    <text x="600" y="280" text-anchor="middle"
+          font-family="Inter, system-ui, -apple-system, sans-serif" font-size="64"
+          fill="#A07820" font-weight="bold" letter-spacing="2">YIDDISH OR BULLSHIT</text>
 
     <!-- Tagline -->
-    <text x="600" y="290" text-anchor="middle"
-          font-family="system-ui, -apple-system, sans-serif" font-size="36"
-          fill="#FFFFFF" font-weight="bold">Can You Spot It?</text>
-
-    <!-- Subtitle -->
-    <text x="600" y="340" text-anchor="middle"
-          font-family="system-ui, -apple-system, sans-serif" font-size="22"
-          fill="#999999">A daily media literacy game</text>
-
-    <!-- URL -->
-    <text x="600" y="480" text-anchor="middle"
-          font-family="system-ui, -apple-system, sans-serif" font-size="18"
-          fill="#999999">playbullshit.com</text>
+    <text x="600" y="350" text-anchor="middle"
+          font-family="Inter, system-ui, -apple-system, sans-serif" font-size="24"
+          fill="#FFFFFF">Real Yiddish words. Fake Yiddish words. You decide.</text>
   </svg>`;
 
   await sharp(Buffer.from(svg))
@@ -60,10 +50,10 @@ async function generateAppleTouchIcon() {
 
   const svg = `
   <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${size}" height="${size}" fill="#0D0D0D"/>
+    <rect width="${size}" height="${size}" fill="#1A1A1A"/>
     <text x="90" y="105" text-anchor="middle" dominant-baseline="central"
-          font-family="Georgia, 'Times New Roman', serif" font-size="72"
-          fill="#A07820" font-weight="bold" letter-spacing="1.5">BS</text>
+          font-family="Georgia, 'Times New Roman', serif" font-size="68"
+          fill="#A07820" font-weight="bold" letter-spacing="1">YB</text>
   </svg>`;
 
   await sharp(Buffer.from(svg))
@@ -82,10 +72,10 @@ async function generateFavicon() {
 
   const svg = `
   <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${size}" height="${size}" fill="#0D0D0D" rx="4"/>
+    <rect width="${size}" height="${size}" fill="#1A1A1A" rx="4"/>
     <text x="16" y="19" text-anchor="middle" dominant-baseline="central"
-          font-family="Georgia, 'Times New Roman', serif" font-size="15"
-          fill="#A07820" font-weight="bold" letter-spacing="0.5">BS</text>
+          font-family="Georgia, 'Times New Roman', serif" font-size="14"
+          fill="#A07820" font-weight="bold" letter-spacing="0.3">YB</text>
   </svg>`;
 
   // Generate as PNG (modern browsers support PNG favicons via <link rel="icon">)

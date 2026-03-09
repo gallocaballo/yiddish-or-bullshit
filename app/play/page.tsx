@@ -18,6 +18,7 @@ import { selectDailyItems, selectFreePlayItems, getTodayDateStr } from "@/lib/ch
 import { saveDailyRecord, updatePlayerStats } from "@/lib/storage";
 import { ROUNDS_PER_SESSION } from "@/lib/game";
 import type { WordItem, GameMode, Vote, ConfidenceLevel } from "@/lib/types";
+import { seededPick, REVEAL_REACTIONS, TAP_TO_CONTINUE, LOCK_IT_IN, ERROR_MESSAGES } from "@/lib/copy";
 import wordsData from "@/data/words.json";
 
 const allItems = wordsData as WordItem[];
@@ -90,10 +91,32 @@ function PlayGame() {
     [session.phase, actions]
   );
 
+  // Compute date seed once
+  const todayDate = getTodayDateStr();
+
+  // Compute reveal reaction for current result
+  const revealReaction = (() => {
+    if (!lastResult) return "";
+    const { correct, item, confidence } = lastResult;
+    const seed = item.id + todayDate;
+    if (!correct && confidence >= 4) {
+      return seededPick(REVEAL_REACTIONS.highConfidenceWrong, seed);
+    }
+    if (correct && item.isReal) return seededPick(REVEAL_REACTIONS.correctReal, seed);
+    if (correct && !item.isReal) return seededPick(REVEAL_REACTIONS.correctFake, seed);
+    if (!correct && item.isReal) return seededPick(REVEAL_REACTIONS.wrongReal, seed);
+    return seededPick(REVEAL_REACTIONS.wrongFake, seed);
+  })();
+
+  // Rotating per-round copy
+  const roundSeed = String(session.currentRound) + todayDate;
+  const tapToContinueText = seededPick(TAP_TO_CONTINUE, roundSeed);
+  const lockItInLabel = seededPick(LOCK_IT_IN, roundSeed);
+
   if (!currentItem && session.phase !== "complete") {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-text-secondary">Loading...</p>
+        <p className="text-text-secondary">{ERROR_MESSAGES.genericError}</p>
       </div>
     );
   }
@@ -109,6 +132,7 @@ function PlayGame() {
       <div className="w-full max-w-lg space-y-6">
         {/* Header */}
         <SessionHeader
+          mode={mode}
           round={session.currentRound + 1}
           totalRounds={ROUNDS_PER_SESSION}
           score={session.score}
@@ -143,6 +167,7 @@ function PlayGame() {
                 <ConfirmButton
                   onConfirm={handleConfirm}
                   disabled={session.currentVote === null}
+                  label={lockItInLabel}
                 />
               </>
             )}
@@ -150,7 +175,7 @@ function PlayGame() {
         )}
 
         {/* Reveal panel (post-confirm) */}
-        {isRevealed && lastResult && <RevealPanel result={lastResult} />}
+        {isRevealed && lastResult && <RevealPanel result={lastResult} reaction={revealReaction} />}
 
         {/* Tap to continue hint during reveal */}
         {isRevealed && (
@@ -158,7 +183,7 @@ function PlayGame() {
             className="text-center animate-[fadeIn_200ms_ease-in_500ms_both]"
             style={{ fontSize: 13, color: "#999999" }}
           >
-            Tap anywhere to continue
+            {tapToContinueText}
           </p>
         )}
       </div>

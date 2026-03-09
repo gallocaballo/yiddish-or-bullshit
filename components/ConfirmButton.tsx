@@ -10,9 +10,11 @@ interface ConfirmButtonProps {
   onConfirm: () => void;
   /** Whether the button is disabled */
   disabled?: boolean;
+  /** Button label text (rotates per round) */
+  label?: string;
 }
 
-export function ConfirmButton({ onConfirm, disabled = false }: ConfirmButtonProps) {
+export function ConfirmButton({ onConfirm, disabled = false, label = "Lock it in" }: ConfirmButtonProps) {
   return (
     <button
       type="button"
@@ -24,7 +26,7 @@ export function ConfirmButton({ onConfirm, disabled = false }: ConfirmButtonProp
           : "cursor-pointer hover:opacity-90 active:scale-[0.98]"
       }`}
     >
-      Lock It In
+      {label}
     </button>
   );
 }

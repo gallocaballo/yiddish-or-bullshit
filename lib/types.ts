@@ -26,11 +26,20 @@ export const CONFIDENCE_TIERS: Record<
   ConfidenceLevel,
   { label: string; correct: number; wrong: number; subtitle: string }
 > = {
-  1: { label: "Guess", correct: 50, wrong: -10, subtitle: "Right: +50. Wrong: \u221210." },
-  2: { label: "Hunch", correct: 100, wrong: -50, subtitle: "Right: +100. Wrong: \u221250." },
-  3: { label: "Sure", correct: 150, wrong: -100, subtitle: "Right: +150. Wrong: \u2212100." },
-  4: { label: "Certain", correct: 250, wrong: -250, subtitle: "Right: +250. Wrong: \u2212250." },
-  5: { label: "Positive", correct: 350, wrong: -400, subtitle: "Right: +350. Wrong: \u2212400." },
+  1: { label: "Meh", correct: 50, wrong: -10, subtitle: "A shrug and a prayer. +50 right, \u221210 wrong." },
+  2: { label: "Maybe", correct: 100, wrong: -50, subtitle: "Could go either way. +100 right, \u221250 wrong." },
+  3: { label: "Sure", correct: 150, wrong: -100, subtitle: "You think you know? Mazel tov. +150 right, \u2212100 wrong." },
+  4: { label: "Positive", correct: 250, wrong: -250, subtitle: "Equal stakes. Don\u2019t plotz. +250 right, \u2212250 wrong." },
+  5: { label: "Certain", correct: 350, wrong: -400, subtitle: "Zicher vi der toyt. You better be. +350 right, \u2212400 wrong." },
+} as const;
+
+/** Short abbreviations for share card display at small sizes */
+export const CONFIDENCE_TIER_ABBREVS: Record<ConfidenceLevel, string> = {
+  1: "Meh",
+  2: "Maybe",
+  3: "Sure",
+  4: "Pos",
+  5: "Cert",
 } as const;
 
 /** Shared fields for all word items */

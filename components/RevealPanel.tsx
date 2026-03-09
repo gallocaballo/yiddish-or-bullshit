@@ -12,14 +12,21 @@ import { formatPoints } from "@/lib/game";
 interface RevealPanelProps {
   /** The round result to display */
   result: RoundResult;
+  /** Reaction line displayed above the result badge */
+  reaction: string;
 }
 
-export function RevealPanel({ result }: RevealPanelProps) {
+export function RevealPanel({ result, reaction }: RevealPanelProps) {
   const { item, correct, vote, confidence, points, streakMultiplier } = result;
   const tierLabel = CONFIDENCE_TIERS[confidence].label;
 
   return (
     <div className="animate-reveal w-full space-y-4">
+      {/* Reaction line */}
+      <p className="text-center font-serif italic text-text-primary" style={{ fontSize: 15 }}>
+        {reaction}
+      </p>
+
       {/* Result badge */}
       <div
         className={`rounded-lg px-4 py-3 text-center text-lg font-bold ${

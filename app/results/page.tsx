@@ -2,21 +2,74 @@
 
 /**
  * Results screen — shows final score, round breakdown, and share card.
- * Displays: Total Points, Accuracy, Average Confidence, Best Streak.
+ * Displays: Punkte (Points), Trefn (Accuracy), Bitokhn (Confidence), Beste Strik (Best Streak).
  */
 
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import type { SessionResult } from "@/lib/types";
-import { CONFIDENCE_TIERS } from "@/lib/types";
+import { CONFIDENCE_TIERS, CONFIDENCE_TIER_ABBREVS } from "@/lib/types";
 import type { ConfidenceLevel } from "@/lib/types";
 import { formatPoints } from "@/lib/game";
+import {
+  seededPick,
+  RESULTS_REACTIONS,
+  SHARE_COPY,
+  BUTTONS,
+  METRIC_LABELS,
+  ERROR_MESSAGES,
+} from "@/lib/copy";
+
+const GAME_URL = "https://yiddishorbullshit.com";
 
 /** Get the nearest tier label for an average confidence value */
 function getTierLabel(avg: number): string {
   const rounded = Math.round(avg) as ConfidenceLevel;
   const clamped = Math.max(1, Math.min(5, rounded)) as ConfidenceLevel;
   return CONFIDENCE_TIERS[clamped].label;
+}
+
+/** Get a summary reaction line based on accuracy */
+function getResultsReaction(correctCount: number, date: string): string {
+  const pool =
+    correctCount === 5
+      ? RESULTS_REACTIONS.fiveOfFive
+      : correctCount === 4
+        ? RESULTS_REACTIONS.fourOfFive
+        : correctCount === 3
+          ? RESULTS_REACTIONS.threeOfFive
+          : correctCount === 0
+            ? RESULTS_REACTIONS.zeroOfFive
+            : RESULTS_REACTIONS.twoOrWorse;
+  return seededPick(pool, date);
+}
+
+/** Get share text based on performance */
+function getShareText(
+  totalScore: number,
+  correctCount: number,
+  date: string
+): string {
+  let pool: readonly string[];
+  if (totalScore < 0) {
+    pool = SHARE_COPY.negativeScore;
+  } else if (correctCount === 5) {
+    pool = SHARE_COPY.perfect;
+  } else if (correctCount === 4) {
+    pool = SHARE_COPY.fourOfFive;
+  } else if (correctCount === 3) {
+    pool = SHARE_COPY.threeOfFive;
+  } else {
+    pool = SHARE_COPY.twoOrWorse;
+  }
+
+  let text = seededPick(pool, date);
+  text = text
+    .replace(/\[SCORE\]/g, String(totalScore))
+    .replace(/\[ACCURACY\]/g, `${correctCount}/5`)
+    .replace(/\[ABS_SCORE\]/g, String(Math.abs(totalScore)));
+
+  return `${text} ${GAME_URL}`;
 }
 
 function ResultsContent() {
@@ -70,7 +123,7 @@ function ResultsContent() {
   const handleCopyText = useCallback(async () => {
     if (!result) return;
     const correctCount = result.results.filter((r) => r.correct).length;
-    const text = `I scored ${result.totalScore} on today's Yiddish or Bullshit. ${correctCount}/5 correct. Nu, can you do better?`;
+    const text = getShareText(result.totalScore, correctCount, result.date);
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -81,7 +134,7 @@ function ResultsContent() {
   if (!result) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-4">
-        <p className="mb-4 text-text-secondary">No results found.</p>
+        <p className="mb-4 text-text-secondary">{ERROR_MESSAGES.genericError}</p>
         <Link
           href="/"
           className="rounded-lg bg-text-primary px-6 py-3 font-semibold text-bg-primary"
@@ -93,18 +146,20 @@ function ResultsContent() {
   }
 
   const correctCount = result.results.filter((r) => r.correct).length;
+  const summaryReaction = getResultsReaction(correctCount, result.date);
 
   return (
     <div className="flex min-h-screen flex-col items-center px-4 py-8">
       <div className="w-full max-w-lg space-y-6">
-        {/* Title */}
+        {/* Title + summary reaction */}
         <div className="text-center">
           <h1 className="font-serif text-3xl text-text-primary sm:text-4xl">
-            Results
+            {result.mode === "daily"
+              ? `Today\u2019s Words \u2014 ${result.date}`
+              : "Practice Round"}
           </h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            {result.mode === "daily" ? "Daily Challenge" : "Free Play"} —{" "}
-            {result.date}
+          <p className="mt-3 font-serif text-lg italic text-text-primary">
+            {summaryReaction}
           </p>
         </div>
 
@@ -113,26 +168,34 @@ function ResultsContent() {
           <p className="text-5xl font-bold tabular-nums text-text-primary">
             {result.totalScore.toLocaleString()}
           </p>
-          <p className="mt-1 text-sm text-text-secondary">points</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            {METRIC_LABELS.totalPoints.yiddish} ({METRIC_LABELS.totalPoints.english})
+          </p>
 
           <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
             <div>
               <p className="font-bold text-text-primary">
                 {correctCount}/5
               </p>
-              <p className="text-text-secondary">Accuracy</p>
+              <p className="text-text-secondary">
+                {METRIC_LABELS.accuracy.yiddish} ({METRIC_LABELS.accuracy.english})
+              </p>
             </div>
             <div>
               <p className="font-bold text-text-primary">
                 {getTierLabel(result.averageConfidence)}
               </p>
-              <p className="text-text-secondary">Avg Confidence</p>
+              <p className="text-text-secondary">
+                {METRIC_LABELS.confidence.yiddish} ({METRIC_LABELS.confidence.english})
+              </p>
             </div>
             <div>
               <p className="font-bold text-text-primary">
                 {result.bestStreak}
               </p>
-              <p className="text-text-secondary">Best Streak</p>
+              <p className="text-text-secondary">
+                {METRIC_LABELS.bestStreak.yiddish} ({METRIC_LABELS.bestStreak.english})
+              </p>
             </div>
           </div>
 
@@ -223,9 +286,24 @@ function ResultsContent() {
               >
                 YIDDISH OR BULLSHIT
               </span>
-              <span style={{ fontSize: 24, color: "#999999" }}>
-                {result.date}
-              </span>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                <span style={{ fontSize: 24, color: "#999999" }}>
+                  {result.date}
+                </span>
+                {result.mode === "freeplay" && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: "#999999",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.15em",
+                      marginTop: 4,
+                    }}
+                  >
+                    PRACTICE
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Score */}
@@ -261,7 +339,7 @@ function ResultsContent() {
               </span>
             </div>
 
-            {/* Round indicators with confidence tier */}
+            {/* Round indicators with confidence tier abbreviations */}
             <div
               style={{
                 marginTop: 40,
@@ -295,7 +373,7 @@ function ResultsContent() {
                     {r.correct ? "\u2713" : "\u2717"}
                   </span>
                   <span style={{ fontSize: 14, color: "#999999" }}>
-                    {CONFIDENCE_TIERS[r.confidence].label}
+                    {CONFIDENCE_TIER_ABBREVS[r.confidence]}
                   </span>
                 </div>
               ))}
@@ -305,26 +383,79 @@ function ResultsContent() {
 
         {/* Action buttons */}
         <div className="space-y-3">
-          <button
-            type="button"
-            onClick={handleShare}
-            className="w-full cursor-pointer rounded-lg bg-text-primary px-6 py-4 text-center text-lg font-semibold text-bg-primary transition-opacity hover:opacity-90"
-          >
-            {copied ? "Copied to Clipboard!" : "Share Score Card"}
-          </button>
-          <button
-            type="button"
-            onClick={handleCopyText}
-            className="w-full cursor-pointer rounded-lg border-2 border-border px-6 py-4 text-center text-sm font-medium text-text-secondary transition-colors hover:border-text-secondary"
-          >
-            Copy Share Text
-          </button>
-          <Link
-            href="/play?mode=freeplay"
-            className="block w-full rounded-lg border-2 border-border px-6 py-4 text-center text-lg font-semibold text-text-primary transition-colors hover:border-text-secondary"
-          >
-            Play Again (Free Play)
-          </Link>
+          {result.mode === "daily" ? (
+            <>
+              {/* Daily: share is primary */}
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-full cursor-pointer rounded-lg bg-text-primary px-6 py-4 text-center font-semibold text-bg-primary transition-opacity hover:opacity-90"
+              >
+                {copied ? (
+                  "Copied to Clipboard!"
+                ) : (
+                  <>
+                    <span className="text-lg">{BUTTONS.share.primary}</span>
+                    <span className="block text-xs font-normal opacity-70">
+                      {BUTTONS.share.secondary}
+                    </span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyText}
+                className="w-full cursor-pointer rounded-lg border-2 border-border px-6 py-4 text-center text-sm font-medium text-text-secondary transition-colors hover:border-text-secondary"
+              >
+                Copy Share Text
+              </button>
+              <Link
+                href="/play?mode=freeplay"
+                className="block w-full rounded-lg border-2 border-border px-6 py-4 text-center font-semibold text-text-primary transition-colors hover:border-text-secondary"
+              >
+                <span className="text-lg">{BUTTONS.keepPlaying.primary}</span>
+                <span className="block text-xs font-normal text-text-secondary">
+                  {BUTTONS.keepPlaying.secondary}
+                </span>
+              </Link>
+            </>
+          ) : (
+            <>
+              {/* Practice: play-again is primary, share is secondary */}
+              <Link
+                href="/play?mode=freeplay"
+                className="block w-full rounded-lg bg-text-primary px-6 py-4 text-center font-semibold text-bg-primary transition-opacity hover:opacity-90"
+              >
+                <span className="text-lg">{BUTTONS.playAgain.primary}</span>
+                <span className="block text-xs font-normal opacity-70">
+                  {BUTTONS.playAgain.secondary}
+                </span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-full cursor-pointer rounded-lg border-2 border-border px-6 py-4 text-center font-semibold text-text-primary transition-colors hover:border-text-secondary"
+              >
+                {copied ? (
+                  "Copied to Clipboard!"
+                ) : (
+                  <>
+                    <span className="text-lg">{BUTTONS.share.primary}</span>
+                    <span className="block text-xs font-normal text-text-secondary">
+                      {BUTTONS.share.secondary}
+                    </span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyText}
+                className="w-full cursor-pointer rounded-lg border-2 border-border px-6 py-4 text-center text-sm font-medium text-text-secondary transition-colors hover:border-text-secondary"
+              >
+                Copy Share Text
+              </button>
+            </>
+          )}
           <Link
             href="/"
             className="block w-full py-3 text-center text-sm text-text-secondary underline"
